@@ -1,0 +1,8 @@
+flask
+flask-cors
+deepface
+tf-keras
+pandas
+openpyxl
+pillow
+gunicorn

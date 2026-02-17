@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Safe Return — Apna Ghar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy:        #0B1D3A;
+  --navy-mid:    #12306A;
+  --navy-light:  #1A4494;
+  --navy-pale:   #EBF0FA;
+  --navy-faint:  #F4F7FD;
+  --gold:        #C8A84B;
+  --gold-light:  #FBF4E3;
+  --white:       #FFFFFF;
+  --off-white:   #F7F9FC;
+  --border:      #D0D8E8;
+  --border-dark: #AAB8D4;
+  --text:        #0B1D3A;
+  --text-mid:    #3A4F75;
+  --text-soft:   #6B7DA8;
+  --text-xs:     #92A2C0;
+  --green:       #1A7A5E;
+  --green-bg:    #E8F5F1;
+  --red:         #B83232;
+  --red-bg:      #FDECEC;
+  --amber:       #8A5F0E;
+  --amber-bg:    #FEF4DC;
+  --shadow-sm:   0 1px 4px rgba(11,29,58,.07);
+  --shadow-md:   0 4px 20px rgba(11,29,58,.10);
+  --shadow-lg:   0 12px 48px rgba(11,29,58,.14);
+  --shadow-xl:   0 28px 80px rgba(11,29,58,.20);
+  --r:    10px;
+  --r-lg: 16px;
+  --r-xl: 22px;
+}
+*{ box-sizing:border-box; margin:0; padding:0; }
+body{ font-family:'IBM Plex Sans',sans-serif; background:var(--off-white); color:var(--text); min-height:100vh; font-size:14px; line-height:1.55; }
+h1,h2,h3{ font-family:'Libre Baskerville',Georgia,serif; }
+
+/* ── SCREENS ── */
+.screen{ display:none; }
+.screen.active{ display:block; animation:sIn .35s ease; }
+@keyframes sIn{ from{opacity:0;transform:translateY(10px);} to{opacity:1;transform:translateY(0);} }
+
+/* ═══════════════════════════════════════
+   LOGIN
+═══════════════════════════════════════ */
+#login-screen{ min-height:100vh; display:grid; grid-template-columns:1fr 1fr; }
+
+.ll{
+  background:var(--navy); position:relative; overflow:hidden;
+  display:flex; flex-direction:column; justify-content:space-between; padding:52px 56px;
+}
+.ll::before{
+  content:''; position:absolute; inset:0;
+  background-image: linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);
+  background-size:40px 40px;
+}
+.ll::after{
+  content:''; position:absolute; bottom:-150px; right:-120px;
+  width:420px; height:420px; border-radius:50%;
+  background:radial-gradient(circle,rgba(200,168,75,.2) 0%,transparent 70%);
+}
+.org-badge{ position:relative; z-index:1; display:flex; align-items:center; gap:14px; }
+.org-emblem{
+  width:52px; height:52px; border:2px solid var(--gold); border-radius:12px;
+  display:flex; align-items:center; justify-content:center; font-size:24px;
+  background:rgba(200,168,75,.12); flex-shrink:0;
+}
+.org-text h2{ font-size:16px; font-weight:700; color:var(--white); letter-spacing:.02em; }
+.org-text p{ font-size:10.5px; color:rgba(255,255,255,.45); letter-spacing:.1em; text-transform:uppercase; margin-top:2px; }
+
+.ll-hero{ position:relative; z-index:1; }
+.ll-hero h1{ font-size:36px; font-weight:700; color:var(--white); line-height:1.2; margin-bottom:14px; }
+.ll-hero h1 em{ color:var(--gold); font-style:normal; }
+.ll-hero p{ color:rgba(255,255,255,.58); font-size:14px; max-width:320px; line-height:1.75; }
+
+.ll-stats{ position:relative; z-index:1; display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.ls{ background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.10); border-radius:10px; padding:16px 18px; }
+.ls strong{ display:block; font-family:'Libre Baskerville',serif; font-size:26px; color:var(--gold); font-weight:700; }
+.ls span{ font-size:11px; color:rgba(255,255,255,.45); letter-spacing:.06em; text-transform:uppercase; }
+
+.lr{ background:var(--white); display:flex; align-items:center; justify-content:center; padding:48px 56px; }
+.lf-wrap{ width:100%; max-width:380px; }
+.lf-wrap h3{ font-size:26px; font-weight:700; color:var(--navy); margin-bottom:5px; }
+.lf-wrap .lf-sub{ font-size:13.5px; color:var(--text-soft); margin-bottom:30px; }
+
+.role-sw{ display:flex; border:1.5px solid var(--border); border-radius:9px; overflow:hidden; margin-bottom:26px; }
+.rb{ flex:1; padding:10px 12px; border:none; cursor:pointer; font-family:'IBM Plex Sans',sans-serif; font-size:13px; font-weight:500; background:var(--white); color:var(--text-soft); transition:all .2s; display:flex; align-items:center; justify-content:center; gap:7px; }
+.rb+.rb{ border-left:1.5px solid var(--border); }
+.rb.active{ background:var(--navy); color:var(--white); font-weight:700; }
+
+.fld{ margin-bottom:16px; }
+.fld label{ display:block; font-size:11px; font-weight:700; color:var(--text-mid); letter-spacing:.05em; text-transform:uppercase; margin-bottom:5px; }
+.fld input,.fld select,.fld textarea{
+  width:100%; padding:11px 13px; border:1.5px solid var(--border); border-radius:var(--r);
+  font-family:'IBM Plex Sans',sans-serif; font-size:14px; color:var(--text);
+  background:var(--off-white); outline:none; transition:border-color .2s,box-shadow .2s;
+}
+.fld input:focus,.fld select:focus,.fld textarea:focus{
+  border-color:var(--navy-light); box-shadow:0 0 0 3px rgba(26,68,148,.10); background:var(--white);
+}
+.fld input::placeholder{ color:var(--text-xs); }
+
+.btn-navy{
+  width:100%; padding:13px; border:none; border-radius:var(--r); cursor:pointer;
+  font-family:'IBM Plex Sans',sans-serif; font-size:14.5px; font-weight:700;
+  background:var(--navy); color:var(--white); letter-spacing:.03em;
+  box-shadow:0 4px 16px rgba(11,29,58,.25); transition:all .2s; margin-top:4px;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.btn-navy:hover{ background:var(--navy-mid); box-shadow:0 8px 24px rgba(11,29,58,.32); transform:translateY(-1px); }
+.btn-navy:active{ transform:translateY(0); }
+.lf-note{ text-align:center; font-size:12px; color:var(--text-xs); margin-top:16px; }
+.lf-note span{ color:var(--navy); font-weight:700; }
+
+/* ═══════════════════════════════════════
+   TOP NAV
+═══════════════════════════════════════ */
+.top-nav{
+  background:var(--navy); height:60px;
+  display:flex; align-items:center; justify-content:space-between; padding:0 28px;
+  position:sticky; top:0; z-index:100; box-shadow:0 2px 14px rgba(11,29,58,.35);
+}
+.nav-brand{ display:flex; align-items:center; gap:11px; }
+.nav-brand .nb-em{ width:34px; height:34px; border-radius:8px; border:1.5px solid var(--gold); background:rgba(200,168,75,.15); display:flex; align-items:center; justify-content:center; font-size:16px; }
+.nav-brand h2{ font-size:16px; color:var(--white); font-weight:700; }
+.nav-brand .nb-pill{ font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; background:rgba(200,168,75,.18); color:var(--gold); border:1px solid rgba(200,168,75,.3); padding:3px 9px; border-radius:20px; }
+.nav-right{ display:flex; align-items:center; gap:14px; }
+.nav-meta strong{ display:block; font-size:13px; color:var(--white); font-weight:600; text-align:right; }
+.nav-meta span{ font-size:11px; color:rgba(255,255,255,.4); }
+.nav-ava{ width:34px; height:34px; border-radius:8px; background:rgba(200,168,75,.18); border:1.5px solid rgba(200,168,75,.35); display:flex; align-items:center; justify-content:center; font-size:14px; }
+.btn-out{ padding:7px 13px; border-radius:7px; border:1px solid rgba(255,255,255,.2); background:transparent; cursor:pointer; font-family:'IBM Plex Sans',sans-serif; font-size:12px; font-weight:600; color:rgba(255,255,255,.65); transition:all .2s; }
+.btn-out:hover{ border-color:rgba(255,255,255,.5); color:var(--white); }
+
+/* ═══════════════════════════════════════
+   REPORT FORM (Public)
+═══════════════════════════════════════ */
+#report-screen{ min-height:100vh; }
+.rep-banner{
+  background:linear-gradient(100deg,var(--navy) 0%,var(--navy-mid) 55%,var(--navy-light) 100%);
+  padding:36px 40px 52px; position:relative; overflow:hidden;
+}
+.rep-banner::before{
+  content:''; position:absolute; inset:0;
+  background:repeating-linear-gradient(-55deg,rgba(255,255,255,.025) 0,rgba(255,255,255,.025) 1px,transparent 1px,transparent 28px);
+}
+.rep-banner::after{ content:''; position:absolute; bottom:-24px; left:0; right:0; height:48px; background:var(--off-white); border-radius:48px 48px 0 0; }
+.rb-inner{ position:relative; z-index:1; }
+.rb-tag{ display:inline-flex; align-items:center; gap:6px; background:rgba(200,168,75,.18); border:1px solid rgba(200,168,75,.35); border-radius:20px; padding:4px 12px; font-size:11px; font-weight:700; color:var(--gold); letter-spacing:.08em; text-transform:uppercase; margin-bottom:14px; }
+.rep-banner h1{ font-size:28px; font-weight:700; color:var(--white); margin-bottom:8px; }
+.rep-banner p{ color:rgba(255,255,255,.6); font-size:13.5px; max-width:520px; }
+
+.form-body{ max-width:860px; margin:0 auto; padding:8px 28px 60px; }
+.sec-card{ background:var(--white); border-radius:var(--r-xl); border:1px solid var(--border); box-shadow:var(--shadow-sm); margin-bottom:18px; overflow:hidden; }
+.sc-head{ padding:17px 26px 15px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px; }
+.sc-ico{ width:36px; height:36px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0; }
+.sc-ico.n{ background:var(--navy-pale); }
+.sc-ico.g{ background:var(--gold-light); }
+.sc-ico.r{ background:var(--red-bg); }
+.sc-ico.gr{ background:var(--green-bg); }
+.sc-head h3{ font-size:15px; font-weight:700; color:var(--navy); }
+.sc-head p{ font-size:12px; color:var(--text-soft); margin-top:1px; }
+.sc-req{ margin-left:auto; font-size:11px; font-weight:700; color:var(--red); background:var(--red-bg); padding:2px 8px; border-radius:4px; white-space:nowrap; }
+.sc-body{ padding:22px 26px; }
+.g2{ display:grid; grid-template-columns:1fr 1fr; gap:15px; }
+.g2 .s2{ grid-column:1/-1; }
+
+.photo-drop{ border:2px dashed var(--border-dark); border-radius:var(--r-lg); padding:38px; text-align:center; cursor:pointer; transition:all .25s; background:var(--off-white); display:block; }
+.photo-drop:hover{ border-color:var(--navy-light); background:var(--navy-faint); }
+.pd-ico{ font-size:34px; margin-bottom:10px; display:block; opacity:.65; }
+.photo-drop h4{ font-size:14px; font-weight:700; color:var(--navy); margin-bottom:5px; }
+.photo-drop p{ font-size:12px; color:var(--text-soft); }
+.photo-drop input{ display:none; }
+#ph-prev{ display:none; max-width:200px; border-radius:var(--r); margin:14px auto 0; border:2px solid var(--border); box-shadow:var(--shadow-md); }
+
+.sub-bar{ display:flex; align-items:center; justify-content:space-between; margin-top:8px; flex-wrap:wrap; gap:12px; }
+.sub-bar p{ font-size:12px; color:var(--text-soft); }
+.btn-submit{
+  padding:13px 32px; border:none; border-radius:var(--r); cursor:pointer;
+  font-family:'IBM Plex Sans',sans-serif; font-size:14px; font-weight:700;
+  background:var(--navy); color:var(--white); letter-spacing:.02em;
+  box-shadow:0 6px 20px rgba(11,29,58,.26); transition:all .25s;
+  display:flex; align-items:center; gap:8px;
+}
+.btn-submit:hover{ transform:translateY(-2px); box-shadow:0 10px 28px rgba(11,29,58,.32); background:var(--navy-mid); }
+
+.alert-ok{ display:none; margin-bottom:18px; background:var(--green-bg); border:1.5px solid var(--green); border-radius:var(--r); padding:14px 18px; color:var(--green); font-size:13.5px; font-weight:500; align-items:center; gap:10px; }
+.alert-ok.show{ display:flex; animation:sIn .3s ease; }
+
+/* ═══════════════════════════════════════
+   ADMIN
+═══════════════════════════════════════ */
+#admin-screen{ min-height:100vh; }
+.a-wrap{ display:flex; min-height:calc(100vh - 60px); }
+
+.a-sb{ width:220px; flex-shrink:0; background:var(--white); border-right:1px solid var(--border); padding:18px 12px; display:flex; flex-direction:column; gap:2px; }
+.sb-lbl{ font-size:10px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--text-xs); padding:6px 10px 3px; margin-top:10px; }
+.sb-lbl:first-child{ margin-top:0; }
+.sbi{ display:flex; align-items:center; gap:9px; padding:9px 10px; border-radius:8px; cursor:pointer; font-size:13px; font-weight:500; color:var(--text-mid); border:none; background:transparent; width:100%; text-align:left; font-family:'IBM Plex Sans',sans-serif; transition:all .15s; }
+.sbi:hover{ background:var(--navy-faint); color:var(--navy); }
+.sbi.active{ background:var(--navy-pale); color:var(--navy); font-weight:700; }
+.sbi .ic{ font-size:15px; width:20px; text-align:center; }
+.sb-n{ margin-left:auto; font-size:11px; font-weight:800; background:var(--navy); color:var(--white); border-radius:10px; padding:1px 7px; min-width:22px; text-align:center; }
+.sb-n.g{ background:var(--green); }
+.sb-n.r{ background:var(--red); }
+
+.a-main{ flex:1; padding:26px; background:var(--off-white); overflow-y:auto; }
+
+.stats-g{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
+.stat{ background:var(--white); border:1px solid var(--border); border-radius:var(--r-lg); padding:20px 22px; position:relative; overflow:hidden; box-shadow:var(--shadow-sm); }
+.stat::after{ content:attr(data-icon); position:absolute; right:14px; top:14px; font-size:28px; opacity:.16; pointer-events:none; }
+.stat-lbl{ font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--text-soft); margin-bottom:7px; }
+.stat-num{ font-family:'Libre Baskerville',serif; font-size:32px; font-weight:700; line-height:1; color:var(--navy); }
+.stat-sub{ font-size:11px; color:var(--text-xs); margin-top:4px; }
+.stat.a1{ border-top:3px solid var(--navy-light); }
+.stat.a2{ border-top:3px solid var(--red); }
+.stat.a3{ border-top:3px solid var(--green); }
+.stat.a4{ border-top:3px solid var(--gold); }
+
+.tbl-top{ display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:15px; flex-wrap:wrap; gap:12px; }
+.tbl-top h2{ font-size:20px; font-weight:700; color:var(--navy); }
+.tbl-top p{ font-size:12.5px; color:var(--text-soft); margin-top:2px; }
+.filter-bar{ display:flex; gap:9px; align-items:center; }
+.filter-bar input,.filter-bar select{ padding:8px 12px; border:1.5px solid var(--border); border-radius:var(--r); font-family:'IBM Plex Sans',sans-serif; font-size:13px; color:var(--text); background:var(--white); outline:none; transition:border-color .2s; }
+.filter-bar input{ width:210px; }
+.filter-bar input:focus,.filter-bar select:focus{ border-color:var(--navy-light); }
+
+.tbl-card{ background:var(--white); border:1px solid var(--border); border-radius:var(--r-xl); overflow:hidden; box-shadow:var(--shadow-sm); }
+table{ width:100%; border-collapse:collapse; }
+thead th{ background:var(--navy); color:rgba(255,255,255,.7); padding:12px 16px; text-align:left; font-size:11px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; }
+tbody tr{ transition:background .12s; }
+tbody tr:hover{ background:var(--navy-faint); }
+tbody td{ padding:14px 16px; border-bottom:1px solid var(--border); vertical-align:middle; font-size:13px; }
+tbody tr:last-child td{ border-bottom:none; }
+
+.pc{ display:flex; align-items:center; gap:11px; }
+.pava{ width:40px; height:40px; border-radius:9px; background:var(--navy-pale); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:18px; overflow:hidden; flex-shrink:0; }
+.pava img{ width:100%; height:100%; object-fit:cover; }
+.pn{ font-weight:700; color:var(--navy); font-size:13.5px; }
+.pi{ font-size:11.5px; color:var(--text-soft); margin-top:1px; }
+
+.badge{ display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:20px; font-size:11.5px; font-weight:700; }
+.badge.missing{ background:var(--red-bg); color:var(--red); }
+.badge.found{ background:var(--green-bg); color:var(--green); }
+.badge.processing{ background:var(--amber-bg); color:var(--amber); }
+.badge .dot{ width:6px; height:6px; border-radius:50%; background:currentColor; }
+
+.acts{ display:flex; gap:5px; flex-wrap:wrap; }
+.ba{ padding:6px 11px; border-radius:6px; cursor:pointer; font-family:'IBM Plex Sans',sans-serif; font-size:12px; font-weight:600; transition:all .15s; border:1.5px solid var(--border); background:var(--white); color:var(--text-mid); white-space:nowrap; }
+.ba:hover{ border-color:var(--navy); color:var(--navy); background:var(--navy-faint); }
+.ba.ai{ background:var(--navy); color:var(--white); border-color:var(--navy); box-shadow:0 2px 8px rgba(11,29,58,.2); }
+.ba.ai:hover{ background:var(--navy-mid); transform:translateY(-1px); }
+.ba.fnd{ background:var(--green-bg); color:var(--green); border-color:var(--green); }
+.ba.fnd:hover{ background:var(--green); color:var(--white); }
+
+.empty{ text-align:center; padding:56px 20px; color:var(--text-soft); }
+.empty .eic{ font-size:40px; opacity:.3; margin-bottom:12px; display:block; }
+.empty h3{ font-size:16px; font-weight:600; color:var(--text-mid); margin-bottom:6px; }
+
+/* ═══════════════════════════════════════
+   MODAL SYSTEM
+═══════════════════════════════════════ */
+.ov{ display:none; position:fixed; inset:0; z-index:200; background:rgba(11,29,58,.58); backdrop-filter:blur(5px); align-items:center; justify-content:center; }
+.ov.open{ display:flex; animation:fade .25s ease; }
+@keyframes fade{ from{opacity:0;} to{opacity:1;} }
+.mbox{ background:var(--white); border-radius:var(--r-xl); padding:36px 40px; width:580px; max-width:calc(100vw - 28px); max-height:90vh; overflow-y:auto; box-shadow:var(--shadow-xl); animation:pop .3s cubic-bezier(.34,1.56,.64,1); position:relative; }
+@keyframes pop{ from{opacity:0;transform:scale(.92) translateY(16px);} to{opacity:1;transform:scale(1) translateY(0);} }
+.mcx{ position:absolute; top:14px; right:14px; width:30px; height:30px; border-radius:7px; border:1.5px solid var(--border); background:var(--white); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:14px; color:var(--text-soft); transition:all .2s; }
+.mcx:hover{ background:var(--red-bg); border-color:var(--red); color:var(--red); }
+.mhd{ margin-bottom:22px; }
+.mhd .mtag{ font-size:10.5px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--navy-light); background:var(--navy-pale); padding:3px 9px; border-radius:4px; display:inline-block; margin-bottom:10px; }
+.mhd h2{ font-size:22px; font-weight:700; color:var(--navy); margin-bottom:4px; }
+.mhd p{ font-size:13px; color:var(--text-soft); }
+.mft{ display:flex; gap:10px; margin-top:22px; }
+.mbtn-ghost{ flex:1; padding:11px; border-radius:var(--r); border:1.5px solid var(--border); background:var(--white); cursor:pointer; font-family:'IBM Plex Sans',sans-serif; font-size:13.5px; font-weight:600; color:var(--text-mid); transition:all .2s; }
+.mbtn-ghost:hover{ border-color:var(--navy); color:var(--navy); }
+.mbtn-main{ flex:1.5; padding:11px; border-radius:var(--r); border:none; background:var(--navy); color:var(--white); cursor:pointer; font-family:'IBM Plex Sans',sans-serif; font-size:13.5px; font-weight:700; box-shadow:0 4px 14px rgba(11,29,58,.25); transition:all .2s; letter-spacing:.02em; }
+.mbtn-main:hover{ background:var(--navy-mid); transform:translateY(-1px); }
+
+/* Recognition */
+.recog-card{ background:var(--navy-faint); border:1.5px solid var(--border); border-radius:var(--r-lg); padding:18px 22px; margin-bottom:20px; display:flex; align-items:center; gap:14px; }
+.rfb{ width:68px; height:68px; border-radius:12px; background:var(--navy-pale); border:2px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:28px; overflow:hidden; flex-shrink:0; }
+.rfb img{ width:100%; height:100%; object-fit:cover; }
+.rci h4{ font-size:15px; font-weight:700; color:var(--navy); }
+.rci p{ font-size:12px; color:var(--text-soft); margin-top:3px; }
+
+.steps{ display:flex; flex-direction:column; gap:2px; margin-bottom:20px; }
+.srow{ display:flex; align-items:center; gap:12px; padding:11px 13px; border-radius:9px; transition:background .2s; }
+.srow.run{ background:var(--navy-faint); }
+.srow.done{ background:var(--green-bg); }
+.snum{ width:28px; height:28px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; border:2px solid var(--border); color:var(--text-xs); background:var(--white); transition:all .3s; }
+.srow.run .snum{ background:var(--navy-pale); border-color:var(--navy); color:var(--navy); animation:spin 1s linear infinite; }
+.srow.done .snum{ background:var(--green); border-color:var(--green); color:var(--white); }
+@keyframes spin{ to{transform:rotate(360deg);} }
+.sdet{ flex:1; }
+.sdet strong{ display:block; font-size:13px; color:var(--text); }
+.sdet span{ font-size:11.5px; color:var(--text-soft); }
+.spct{ font-size:12px; font-weight:700; color:var(--navy); }
+
+.mres{ display:none; margin-bottom:4px; background:var(--green-bg); border:1.5px solid var(--green); border-radius:var(--r-lg); padding:18px 20px; animation:sIn .4s ease; }
+.mres.show{ display:block; }
+.mres-hd{ display:flex; align-items:center; gap:9px; margin-bottom:14px; }
+.mres-hd h4{ font-size:15px; font-weight:700; color:var(--green); }
+.mr-row{ display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(26,122,94,.15); font-size:13px; }
+.mr-row:last-of-type{ border-bottom:none; }
+.mr-row span{ color:var(--text-soft); }
+.mr-row strong{ color:var(--navy); }
+.cbar{ height:6px; background:rgba(26,122,94,.2); border-radius:3px; margin-top:10px; overflow:hidden; }
+.cfill{ height:100%; background:var(--green); border-radius:3px; transition:width 1.2s ease; }
+
+/* Found modal */
+.fg{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.fg .s2{ grid-column:1/-1; }
+
+/* Detail modal */
+.dtop{ display:flex; align-items:flex-start; gap:16px; margin-bottom:20px; }
+.dava{ width:72px; height:72px; border-radius:12px; background:var(--navy-pale); border:2px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:30px; overflow:hidden; flex-shrink:0; }
+.dava img{ width:100%; height:100%; object-fit:cover; }
+.dmeta h2{ font-size:22px; font-weight:700; color:var(--navy); }
+.dmeta p{ font-size:13px; color:var(--text-soft); margin-top:3px; }
+.dfields{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.dfi label{ font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--text-soft); display:block; margin-bottom:3px; }
+.dfi p{ font-size:13.5px; color:var(--navy); font-weight:500; }
+.dfi.s2{ grid-column:1/-1; }
+
+/* Toast */
+.tw{ position:fixed; bottom:24px; right:24px; z-index:300; display:flex; flex-direction:column; gap:8px; pointer-events:none; }
+.t{ background:var(--white); border-radius:12px; box-shadow:var(--shadow-lg); padding:14px 18px; display:flex; align-items:center; gap:12px; min-width:280px; border-left:4px solid var(--navy); animation:tSlide .35s cubic-bezier(.34,1.56,.64,1); pointer-events:all; }
+.t.ts{ border-left-color:var(--green); }
+.t.te{ border-left-color:var(--red); }
+@keyframes tSlide{ from{opacity:0;transform:translateX(30px);} to{opacity:1;transform:translateX(0);} }
+.t .tic{ font-size:18px; }
+.t .tb strong{ display:block; font-size:13.5px; font-weight:700; color:var(--navy); }
+.t .tb span{ font-size:12px; color:var(--text-soft); }
+
+@media(max-width:900px){ #login-screen{grid-template-columns:1fr;} .ll{display:none;} .stats-g{grid-template-columns:1fr 1fr;} }
+@media(max-width:700px){ .g2{grid-template-columns:1fr;} .fg{grid-template-columns:1fr;} .dfields{grid-template-columns:1fr;} .a-wrap{flex-direction:column;} .a-sb{width:100%;flex-direction:row;overflow-x:auto;padding:10px;} }
+</style>
+</head>
+<body>
+
+<!-- ══════════════ LOGIN ══════════════ -->
+<div id="login-screen" class="screen active">
+  <div class="ll">
+    <div class="org-badge">
+      <div class="org-emblem">🏠</div>
+      <div class="org-text"><h2>Safe Return</h2><p>Apna Ghar Organisation</p></div>
+    </div>
+    <div class="ll-hero">
+      <h1>Reuniting families through <em>intelligent</em> reintegration</h1>
+      <p>A centralised platform for managing missing person reports, shelter intake, and AI-powered face recognition matching.</p>
+    </div>
+    <div class="ll-stats">
+      <div class="ls"><strong>1,247</strong><span>Shelter Residents</span></div>
+      <div class="ls"><strong>483</strong><span>Families Reunited</span></div>
+      <div class="ls"><strong>94%</strong><span>Match Accuracy</span></div>
+      <div class="ls"><strong>8 Yrs</strong><span>In Operation</span></div>
+    </div>
+  </div>
+  <div class="lr">
+    <div class="lf-wrap">
+      <h3>Sign in to continue</h3>
+      <p class="lf-sub">Access the Safe Return reintegration portal</p>
+      <div class="role-sw">
+        <button class="rb active" onclick="setRole('public',this)">👤 Public User</button>
+        <button class="rb" onclick="setRole('admin',this)">🛡 Administrator</button>
+      </div>
+      <div class="fld"><label>Email Address</label><input type="email" id="l-email" placeholder="you@example.com"/></div>
+      <div class="fld"><label>Password</label><input type="password" id="l-pass" placeholder="••••••••"/></div>
+      <button class="btn-navy" onclick="doLogin()"><span>Sign In</span><span>→</span></button>
+      <p class="lf-note">Demo: any email works · <span>Switch role</span> above</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ PUBLIC REPORT ══════════════ -->
+<div id="report-screen" class="screen">
+  <nav class="top-nav">
+    <div class="nav-brand">
+      <div class="nb-em">🏠</div>
+      <h2>Safe Return</h2>
+      <span class="nb-pill">Public Portal</span>
+    </div>
+    <div class="nav-right">
+      <div class="nav-meta"><strong id="pub-uname">User</strong><span>Public Account</span></div>
+      <div class="nav-ava">👤</div>
+      <button class="btn-out" onclick="logout()">Sign Out</button>
+    </div>
+  </nav>
+
+  <div class="rep-banner">
+    <div class="rb-inner">
+      <div class="rb-tag">🔍 Missing Person Report</div>
+      <h1>Submit a Missing Person Report</h1>
+      <p>Fill in as many details as possible. Your report will be reviewed by the Apna Ghar team and matched against our shelter database using AI face recognition.</p>
+    </div>
+  </div>
+
+  <div class="form-body">
+    <div class="alert-ok" id="pub-ok">✅ <span>Report submitted. Our team will review and initiate AI matching. You'll be contacted at the number provided.</span></div>
+
+    <div class="sec-card">
+      <div class="sc-head">
+        <div class="sc-ico n">🪪</div>
+        <div><h3>Personal Information</h3><p>Basic identity details of the missing individual</p></div>
+        <span class="sc-req">★ Required</span>
+      </div>
+      <div class="sc-body">
+        <div class="g2">
+          <div class="fld"><label>Full Name ★</label><input type="text" id="r-name" placeholder="Missing person's full name"/></div>
+          <div class="fld"><label>Age (approx.)</label><input type="number" id="r-age" placeholder="e.g. 45" min="0" max="120"/></div>
+          <div class="fld"><label>Gender</label>
+            <select id="r-gender"><option value="">Select…</option><option>Male</option><option>Female</option><option>Other</option><option>Unknown</option></select>
+          </div>
+          <div class="fld"><label>Language(s) Spoken</label><input type="text" id="r-lang" placeholder="e.g. Urdu, Punjabi, Pashto"/></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec-card">
+      <div class="sc-head">
+        <div class="sc-ico g">📍</div>
+        <div><h3>Last Seen Details</h3><p>Where and when the person was last seen</p></div>
+        <span class="sc-req">★ Required</span>
+      </div>
+      <div class="sc-body">
+        <div class="g2">
+          <div class="fld"><label>Last Seen Location ★</label><input type="text" id="r-loc" placeholder="Area, street, city or landmark"/></div>
+          <div class="fld"><label>Last Seen Date & Time</label><input type="datetime-local" id="r-dt"/></div>
+          <div class="fld s2"><label>Clothing Description</label><textarea id="r-clothing" rows="2" placeholder="Colour and type of clothing, footwear, accessories…" style="resize:vertical"></textarea></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec-card">
+      <div class="sc-head">
+        <div class="sc-ico n">📝</div>
+        <div><h3>Descriptions</h3><p>Physical and medical details to aid identification</p></div>
+      </div>
+      <div class="sc-body">
+        <div class="g2">
+          <div class="fld s2"><label>General Physical Description</label><textarea id="r-general" rows="2" placeholder="Height, build, complexion, hair colour, distinguishing marks, tattoos…" style="resize:vertical"></textarea></div>
+          <div class="fld s2"><label>Medical Conditions / Special Needs</label><textarea id="r-medical" rows="2" placeholder="Mental health, disabilities, medications, cognitive conditions…" style="resize:vertical"></textarea></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec-card">
+      <div class="sc-head">
+        <div class="sc-ico g">📷</div>
+        <div><h3>Recent Photograph</h3><p>Used by our AI face recognition system for shelter matching</p></div>
+      </div>
+      <div class="sc-body">
+        <label class="photo-drop" for="ph-file">
+          <span class="pd-ico">📂</span>
+          <h4>Upload a recent photograph</h4>
+          <p>JPG, PNG or HEIC · Clear face photo strongly preferred</p>
+          <input type="file" id="ph-file" accept="image/*" onchange="handlePhoto(event)"/>
+        </label>
+        <img id="ph-prev" alt="Preview"/>
+      </div>
+    </div>
+
+    <div class="sec-card">
+      <div class="sc-head">
+        <div class="sc-ico r">📞</div>
+        <div><h3>Your Contact Information</h3><p>So our team can reach you with updates</p></div>
+        <span class="sc-req">★ Required</span>
+      </div>
+      <div class="sc-body">
+        <div class="g2">
+          <div class="fld"><label>Contact Name ★</label><input type="text" id="r-cname" placeholder="Your full name"/></div>
+          <div class="fld"><label>Contact Phone ★</label><input type="tel" id="r-cphone" placeholder="+92 300 1234567"/></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-bar">
+      <p>🔒 All information is treated with strict confidentiality.</p>
+      <button class="btn-submit" onclick="submitReport()"><span>📨</span> Submit Report</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ ADMIN ══════════════ -->
+<div id="admin-screen" class="screen">
+  <nav class="top-nav">
+    <div class="nav-brand">
+      <div class="nb-em">🛡</div>
+      <h2>Safe Return</h2>
+      <span class="nb-pill">Admin Panel</span>
+    </div>
+    <div class="nav-right">
+      <div class="nav-meta"><strong>Administrator</strong><span>Apna Ghar Organisation</span></div>
+      <div class="nav-ava">🛡</div>
+      <button class="btn-out" onclick="logout()">Sign Out</button>
+    </div>
+  </nav>
+  <div class="a-wrap">
+    <aside class="a-sb">
+      <div class="sb-lbl">Reports</div>
+      <button class="sbi active" onclick="setTab('all',this)"><span class="ic">📋</span>All Reports<span class="sb-n" id="sbn-all">0</span></button>
+      <button class="sbi" onclick="setTab('missing',this)"><span class="ic">🔍</span>Still Missing<span class="sb-n r" id="sbn-miss">0</span></button>
+      <button class="sbi" onclick="setTab('found',this)"><span class="ic">✅</span>Found Persons<span class="sb-n g" id="sbn-found">0</span></button>
+      <div class="sb-lbl">System</div>
+      <button class="sbi" onclick="setTab('jobs',this)"><span class="ic">🤖</span>AI Jobs</button>
+    </aside>
+    <main class="a-main">
+      <div class="stats-g">
+        <div class="stat a1" data-icon="📋"><div class="stat-lbl">Total Reports</div><div class="stat-num" id="st-tot">0</div><div class="stat-sub">All submissions</div></div>
+        <div class="stat a2" data-icon="🔍"><div class="stat-lbl">Still Missing</div><div class="stat-num" id="st-miss">0</div><div class="stat-sub">Awaiting match</div></div>
+        <div class="stat a3" data-icon="🏠"><div class="stat-lbl">Reunited</div><div class="stat-num" id="st-found">0</div><div class="stat-sub">Families reunited</div></div>
+        <div class="stat a4" data-icon="🤖"><div class="stat-lbl">Recognitions Run</div><div class="stat-num" id="st-recog">0</div><div class="stat-sub">AI scans</div></div>
+      </div>
+      <div class="tbl-top">
+        <div><h2 id="tbl-h">All Missing Reports</h2><p id="tbl-p">All submitted reports across the platform</p></div>
+        <div class="filter-bar">
+          <input type="text" id="srch" placeholder="🔍  Search by name…" oninput="renderTable()"/>
+          <select id="filt" onchange="renderTable()">
+            <option value="">All Statuses</option>
+            <option>Missing</option><option>Found</option><option>Processing</option>
+          </select>
+        </div>
+      </div>
+      <div class="tbl-card">
+        <table><thead><tr>
+          <th>Person</th><th>Age · Gender</th><th>Last Seen Location</th><th>Date Reported</th><th>Status</th><th>Actions</th>
+        </tr></thead>
+        <tbody id="tbl-body"></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ══════════════ RECOGNITION MODAL ══════════════ -->
+<div class="ov" id="ov-recog">
+  <div class="mbox">
+    <button class="mcx" onclick="closeOv('ov-recog')">✕</button>
+    <div class="mhd"><span class="mtag">🤖 AI Face Recognition</span><h2>Start Recognition Scan</h2><p>AI will extract facial features and search the shelter database for potential matches.</p></div>
+    <div class="recog-card">
+      <div class="rfb" id="r-fimg">👤</div>
+      <div class="rci"><h4 id="r-rname">—</h4><p id="r-rmeta">—</p><p style="font-size:12px;color:var(--text-xs);margin-top:4px">Report ID: <strong id="r-rid">—</strong></p></div>
+    </div>
+    <div class="steps" id="steps"></div>
+    <div class="mres" id="mres">
+      <div class="mres-hd"><span style="font-size:20px">✅</span><h4>Potential Match Found</h4></div>
+      <div class="mr-row"><span>Inmate / Shelter ID</span><strong id="m-id">—</strong></div>
+      <div class="mr-row"><span>Name on record</span><strong id="m-nm">—</strong></div>
+      <div class="mr-row"><span>Current shelter location</span><strong id="m-lc">—</strong></div>
+      <div class="mr-row"><span>Match confidence</span><strong id="m-cf">—</strong></div>
+      <div class="cbar"><div class="cfill" id="m-fill" style="width:0%"></div></div>
+    </div>
+    <div class="mft">
+      <button class="mbtn-ghost" onclick="closeOv('ov-recog')">Close</button>
+      <button class="mbtn-main" id="recog-btn" onclick="runRecog()">▶ Start Recognition</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ FOUND PERSON MODAL ══════════════ -->
+<div class="ov" id="ov-found">
+  <div class="mbox">
+    <button class="mcx" onclick="closeOv('ov-found')">✕</button>
+    <div class="mhd"><span class="mtag">✅ Record Found Person</span><h2>Found Person Entry</h2><p>Record where the individual was located and link them to a shelter inmate record in the found_persons table.</p></div>
+    <input type="hidden" id="fp-rid"/>
+    <div class="fg">
+      <div class="fld s2"><label>Missing Person Name</label><input type="text" id="fp-pnm" readonly style="background:var(--off-white);color:var(--text-mid)"/></div>
+      <div class="fld"><label>Inmate / Shelter ID</label><input type="text" id="fp-iid" placeholder="e.g. AG-2024-0042"/></div>
+      <div class="fld"><label>Found Location ★</label><input type="text" id="fp-loc" placeholder="Street, area, city…"/></div>
+      <div class="fld"><label>Found Date & Time ★</label><input type="datetime-local" id="fp-dt"/></div>
+      <div class="fld"><label>Family Contact Name</label><input type="text" id="fp-cn" placeholder="Next of kin or reporter"/></div>
+      <div class="fld"><label>Family Contact Number</label><input type="tel" id="fp-cp" placeholder="+92 300 1234567"/></div>
+      <div class="fld s2"><label>Notes</label><textarea id="fp-notes" rows="2" placeholder="Condition, immediate needs, reintegration remarks…" style="resize:vertical"></textarea></div>
+    </div>
+    <div class="mft">
+      <button class="mbtn-ghost" onclick="closeOv('ov-found')">Cancel</button>
+      <button class="mbtn-main" onclick="saveFound()">✅ Save to found_persons</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ DETAIL MODAL ══════════════ -->
+<div class="ov" id="ov-detail">
+  <div class="mbox">
+    <button class="mcx" onclick="closeOv('ov-detail')">✕</button>
+    <div class="mhd"><span class="mtag">📋 Report Detail</span></div>
+    <div class="dtop">
+      <div class="dava" id="dt-ava">👤</div>
+      <div class="dmeta"><h2 id="dt-nm">—</h2><p id="dt-mt">—</p><div style="margin-top:8px" id="dt-bdg"></div></div>
+    </div>
+    <div class="dfields" id="dt-flds"></div>
+    <div class="mft">
+      <button class="mbtn-ghost" onclick="closeOv('ov-detail')">Close</button>
+      <button class="mbtn-main" onclick="openRecogFromDetail()">🤖 Run Face Recognition</button>
+    </div>
+  </div>
+</div>
+
+<div class="tw" id="tw"></div>
+
+<script>
+/* ── STATE ── */
+let role='public', activeTab='all', activeId=null, recogRunning=false, recogCount=0;
+
+const STEPS=[
+  {l:'Face Detection',d:'Locate and extract facial landmark points'},
+  {l:'Feature Encoding',d:'Generate 128-dimension embedding vector'},
+  {l:'Database Sweep',d:'Compare against 1,247 shelter residents'},
+  {l:'Match Scoring',d:'Rank candidates by confidence threshold'},
+];
+const TMETA={
+  all:['All Missing Reports','All submitted reports across the platform'],
+  missing:['Still Missing','Individuals not yet located or matched'],
+  found:['Found Persons','Individuals successfully reunited with families'],
+  jobs:['AI Recognition Jobs','History of face recognition scans'],
+};
+
+const reports=[
+  {id:1,name:'Muhammad Arif',age:45,gender:'Male',lang:'Urdu, Punjabi',loc:'Lahore Railway Station',dt:'2024-11-02T08:30',clothing:'Blue shalwar kameez, brown sandals',general:'Tall, grey beard, slight limp',medical:'Diabetic — requires insulin',cname:'Fatima Arif',cphone:'+92 300 1112222',status:'Missing',photo:null,date:'2024-11-02'},
+  {id:2,name:'Zainab Bibi',age:62,gender:'Female',lang:'Sindhi, Urdu',loc:'Karachi Bus Terminal, Saddar',dt:'2024-10-28T14:00',clothing:"Green dupatta, white shalwar kameez",general:"Short, grey hair in bun, mole on left cheek",medical:"Alzheimer's — may be disoriented",cname:'Imran Shah',cphone:'+92 321 9988776',status:'Found',photo:null,date:'2024-10-28'},
+  {id:3,name:'Rahul Kumar',age:17,gender:'Male',lang:'Hindi, Punjabi',loc:'Rawalpindi GT Road, Faizabad',dt:'2024-12-05T22:15',clothing:'Red hoodie, blue jeans, white sneakers',general:'Medium build, short hair, scar on right forearm',medical:'No known conditions',cname:'Suresh Kumar',cphone:'+92 333 4455667',status:'Processing',photo:null,date:'2024-12-05'},
+  {id:4,name:'Amna Khatoon',age:35,gender:'Female',lang:'Pashto, Urdu',loc:'Peshawar Saddar Bazaar',dt:'2024-12-10T11:00',clothing:'Black abaya, orange dupatta',general:'Medium height, brown eyes, gold ring',medical:'Hearing impairment — right ear',cname:'Tariq Khan',cphone:'+92 345 6677889',status:'Missing',photo:null,date:'2024-12-10'},
+  {id:5,name:'Bashir Ahmed',age:70,gender:'Male',lang:'Saraiki, Punjabi',loc:'Multan Chungi No. 9',dt:'2024-12-12T07:45',clothing:'White kurta, grey waistcoat, topi',general:'Elderly, white hair & beard, slow gait',medical:'Heart condition — blood thinners daily',cname:'Nasreen Bashir',cphone:'+92 300 7788990',status:'Missing',photo:null,date:'2024-12-12'},
+];
+const foundLog=[];
+
+/* ── AUTH ── */
+function setRole(r,btn){ role=r; document.querySelectorAll('.rb').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+function doLogin(){
+  const email=document.getElementById('l-email').value.trim();
+  if(!email){ toast('e','Required','Please enter your email address.'); return; }
+  if(role==='admin'){ showScreen('admin-screen'); refreshAdmin(); renderTable(); }
+  else{ document.getElementById('pub-uname').textContent=email.split('@')[0]; showScreen('report-screen'); }
+}
+function logout(){ showScreen('login-screen'); document.getElementById('l-email').value=''; document.getElementById('l-pass').value=''; }
+
+/* ── SCREENS ── */
+function showScreen(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+
+/* ── PHOTO ── */
+let currentPhotoBase64 = null;
+function handlePhoto(e){
+  const f=e.target.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=r=>{
+    currentPhotoBase64 = r.target.result;
+    const img=document.getElementById('ph-prev'); img.src=r.target.result; img.style.display='block';
+  };
+  rd.readAsDataURL(f);
+}
+
+/* ── SUBMIT REPORT ── */
+function submitReport(){
+  const name=document.getElementById('r-name').value.trim();
+  const loc=document.getElementById('r-loc').value.trim();
+  const cn=document.getElementById('r-cname').value.trim();
+  const cp=document.getElementById('r-cphone').value.trim();
+  if(!name||!loc||!cn||!cp){ toast('e','Missing Fields','Please fill all required (★) fields.'); return; }
+  const prev=document.getElementById('ph-prev');
+  reports.push({ id:reports.length+1, name, age:document.getElementById('r-age').value||'?', gender:document.getElementById('r-gender').value||'Unknown', lang:document.getElementById('r-lang').value, loc, dt:document.getElementById('r-dt').value, clothing:document.getElementById('r-clothing').value, general:document.getElementById('r-general').value, medical:document.getElementById('r-medical').value, cname:cn, cphone:cp, status:'Missing', photo:currentPhotoBase64||null, date:new Date().toISOString().slice(0,10) });
+  const a=document.getElementById('pub-ok'); a.classList.add('show'); setTimeout(()=>a.classList.remove('show'),7000);
+  ['r-name','r-age','r-lang','r-loc','r-dt','r-clothing','r-general','r-medical','r-cname','r-cphone'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('r-gender').value=''; prev.style.display='none'; prev.src=''; document.getElementById('ph-file').value=''; currentPhotoBase64=null;
+}
+
+/* ── ADMIN ── */
+function refreshAdmin(){
+  const tot=reports.length, miss=reports.filter(r=>r.status==='Missing').length, fnd=reports.filter(r=>r.status==='Found').length;
+  document.getElementById('st-tot').textContent=tot; document.getElementById('st-miss').textContent=miss; document.getElementById('st-found').textContent=fnd; document.getElementById('st-recog').textContent=recogCount;
+  document.getElementById('sbn-all').textContent=tot; document.getElementById('sbn-miss').textContent=miss; document.getElementById('sbn-found').textContent=fnd;
+}
+
+function setTab(tab,btn){ activeTab=tab; document.querySelectorAll('.sbi').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); const[h,p]=TMETA[tab]||TMETA.all; document.getElementById('tbl-h').textContent=h; document.getElementById('tbl-p').textContent=p; renderTable(); }
+
+function renderTable(){
+  const q=document.getElementById('srch').value.toLowerCase(), fs=document.getElementById('filt').value;
+  let data=[...reports];
+  if(activeTab==='missing') data=data.filter(r=>r.status==='Missing');
+  if(activeTab==='found') data=data.filter(r=>r.status==='Found');
+  if(fs) data=data.filter(r=>r.status===fs);
+  if(q) data=data.filter(r=>r.name.toLowerCase().includes(q));
+  const tb=document.getElementById('tbl-body');
+  if(!data.length){ tb.innerHTML=`<tr><td colspan="6"><div class="empty"><span class="eic">🔍</span><h3>No records found</h3><p>Adjust your search or filter.</p></div></td></tr>`; return; }
+  tb.innerHTML=data.map(r=>`<tr>
+    <td><div class="pc"><div class="pava">${r.photo?`<img src="${r.photo}" alt="${r.name}"/>`:'👤'}</div><div><div class="pn">${r.name}</div><div class="pi">ID #${r.id} · ${r.date}</div></div></div></td>
+    <td><strong>${r.age}</strong> · ${r.gender}</td>
+    <td style="max-width:160px;font-size:12.5px;line-height:1.4">${r.loc||'—'}</td>
+    <td style="font-size:12.5px">${r.date}</td>
+    <td><span class="badge ${r.status.toLowerCase()}"><span class="dot"></span>${r.status}</span></td>
+    <td><div class="acts">
+      <button class="ba" onclick="viewDetail(${r.id})">View</button>
+      <button class="ba ai" onclick="openRecog(${r.id})">🤖 Recognition</button>
+      ${r.status!=='Found'?`<button class="ba fnd" onclick="openFound(${r.id})">✅ Found</button>`:''}
+    </div></td>
+  </tr>`).join('');
+}
+
+/* ── DETAIL ── */
+function viewDetail(id){
+  const r=reports.find(x=>x.id===id); if(!r) return; activeId=id;
+  document.getElementById('dt-nm').textContent=r.name;
+  document.getElementById('dt-mt').textContent=`${r.age} yrs · ${r.gender} · ${r.lang||'Language unknown'}`;
+  document.getElementById('dt-bdg').innerHTML=`<span class="badge ${r.status.toLowerCase()}"><span class="dot"></span>${r.status}</span>`;
+  const a=document.getElementById('dt-ava'); a.innerHTML=r.photo?`<img src="${r.photo}" alt="${r.name}"/>`:'👤';
+  const flds=[['Last Seen Location',r.loc||'—'],['Last Seen Date & Time',r.dt?r.dt.replace('T',' '):'—'],['Clothing Description',r.clothing||'—',1],['Physical Description',r.general||'—',1],['Medical Information',r.medical||'—',1],['Contact Person',r.cname||'—'],['Contact Phone',r.cphone||'—'],['Date Reported',r.date||'—']];
+  document.getElementById('dt-flds').innerHTML=flds.map(([l,v,sp])=>`<div class="dfi${sp?' s2':''}"><label>${l}</label><p>${v}</p></div>`).join('');
+  openOv('ov-detail');
+}
+function openRecogFromDetail(){ closeOv('ov-detail'); setTimeout(()=>openRecog(activeId),120); }
+
+/* ── RECOGNITION ── */
+function openRecog(id){
+  const r=reports.find(x=>x.id===id); if(!r) return; activeId=id; recogRunning=false;
+  document.getElementById('r-fimg').innerHTML=r.photo?`<img src="${r.photo}" alt="${r.name}"/>`:'👤';
+  document.getElementById('r-rname').textContent=r.name;
+  document.getElementById('r-rmeta').textContent=`${r.age} yrs · ${r.gender} · ${r.loc}`;
+  document.getElementById('r-rid').textContent=`#${r.id}`;
+  document.getElementById('steps').innerHTML=STEPS.map((s,i)=>`
+    <div class="srow" id="sr-${i}"><div class="snum" id="sn-${i}">${i+1}</div>
+    <div class="sdet"><strong>${s.l}</strong><span>${s.d}</span></div>
+    <span class="spct" id="sp-${i}"></span></div>`).join('');
+  document.getElementById('mres').classList.remove('show');
+  document.getElementById('m-fill').style.width='0%';
+  const btn=document.getElementById('recog-btn'); btn.textContent='▶ Start Recognition'; btn.disabled=false;
+  openOv('ov-recog');
+}
+function runRecog(){
+  if(recogRunning) return; recogRunning=true;
+  const btn=document.getElementById('recog-btn'); btn.textContent='Scanning…'; btn.disabled=true;
+
+  // Check photo exists before starting animation
+  const report=reports.find(x=>x.id===activeId);
+  if(!report||!report.photo){
+    toast('e','No Photo','This report has no photo attached. Please upload a photo when submitting the report.');
+    btn.textContent='▶ Start Recognition'; btn.disabled=false; recogRunning=false; return;
+  }
+
+  // Animate steps
+  const dur=[1100,1400,1800,1000]; let off=0;
+  STEPS.forEach((_,i)=>{
+    setTimeout(()=>{ document.getElementById(`sr-${i}`).className='srow run'; document.getElementById(`sn-${i}`).textContent='↻'; },off);
+    off+=dur[i];
+    setTimeout(()=>{ document.getElementById(`sr-${i}`).className='srow done'; document.getElementById(`sn-${i}`).textContent='✓'; document.getElementById(`sp-${i}`).textContent='100%'; },off);
+  });
+
+  // Call real Flask API after animation completes
+  setTimeout(async ()=>{
+    try{
+      const response = await fetch('http://127.0.0.1:5000/recognize',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({image: report.photo})
+      });
+
+      if(!response.ok) throw new Error(`Server error: ${response.status}`);
+      const result = await response.json();
+      if(result.error) throw new Error(result.error);
+
+      const conf = result.confidence || 0;
+      const matched = result.match;
+
+      document.getElementById('m-id').textContent = result.person_id || '—';
+      document.getElementById('m-nm').textContent = result.person_name || 'Unknown';
+      document.getElementById('m-lc').textContent = matched ? 'Match found in shelter database' : 'No confident match found';
+      document.getElementById('m-cf').textContent = `${conf}%`;
+
+      // Update result panel header colour based on match
+      const mresEl=document.getElementById('mres');
+      mresEl.classList.add('show');
+      mresEl.style.borderColor = matched ? 'var(--green)' : 'var(--amber)';
+      document.querySelector('#mres .mres-hd span').textContent = matched ? '✅' : '⚠️';
+      document.querySelector('#mres .mres-hd h4').textContent = matched ? 'Potential Match Found' : 'Low Confidence / No Match';
+
+      setTimeout(()=>{ document.getElementById('m-fill').style.width=conf+'%'; },80);
+
+      if(report.status==='Missing') report.status='Processing';
+      recogCount++; refreshAdmin(); renderTable();
+      btn.textContent='✓ Scan Complete';
+
+      if(matched){
+        toast('s','Match Found',`${conf}% confidence — review result below.`);
+      } else {
+        toast('i','No Match',`Confidence: ${conf}%. No strong match in the database.`);
+      }
+
+    } catch(err){
+      // Reset UI on error
+      STEPS.forEach((_,i)=>{ document.getElementById(`sr-${i}`).className='srow'; document.getElementById(`sn-${i}`).textContent=i+1; document.getElementById(`sp-${i}`).textContent=''; });
+      btn.textContent='▶ Start Recognition'; btn.disabled=false; recogRunning=false;
+
+      let msg = err.message;
+      if(msg.includes('fetch')||msg.includes('Failed')){
+        msg='Cannot reach API. Make sure Flask is running: python api.py';
+      }
+      toast('e','API Error', msg);
+    }
+  }, off+350);
+}
+
+/* ── FOUND ── */
+function openFound(id){
+  const r=reports.find(x=>x.id===id); if(!r) return; activeId=id;
+  document.getElementById('fp-rid').value=id;
+  document.getElementById('fp-pnm').value=r.name;
+  document.getElementById('fp-iid').value='';
+  document.getElementById('fp-loc').value='';
+  document.getElementById('fp-dt').value=new Date().toISOString().slice(0,16);
+  document.getElementById('fp-cn').value=r.cname||'';
+  document.getElementById('fp-cp').value=r.cphone||'';
+  document.getElementById('fp-notes').value='';
+  openOv('ov-found');
+}
+function saveFound(){
+  const loc=document.getElementById('fp-loc').value.trim(), dt=document.getElementById('fp-dt').value;
+  if(!loc||!dt){ toast('e','Required','Please enter found location and date/time.'); return; }
+  const r=reports.find(x=>x.id===activeId); if(r) r.status='Found';
+  foundLog.push({ inmate_id:document.getElementById('fp-iid').value||'AG-'+Date.now(), missing_person_name:document.getElementById('fp-pnm').value, found_location:loc, found_datetime:dt, contact_name:document.getElementById('fp-cn').value, contact_number:document.getElementById('fp-cp').value, created_at:new Date().toISOString().slice(0,10) });
+  closeOv('ov-found'); refreshAdmin(); renderTable();
+  toast('s','Record Saved','found_persons entry created. Family notified.');
+}
+
+/* ── OVERLAYS ── */
+function openOv(id){ document.getElementById(id).classList.add('open'); document.body.style.overflow='hidden'; }
+function closeOv(id){ document.getElementById(id).classList.remove('open'); document.body.style.overflow=''; }
+document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',e=>{ if(e.target===o) closeOv(o.id); }));
+
+/* ── TOAST ── */
+function toast(type,title,msg){
+  const w=document.getElementById('tw'), t=document.createElement('div');
+  const cls={s:'ts',e:'te',i:''}[type]||'';
+  const ic={s:'✅',e:'⚠️',i:'ℹ️'}[type]||'ℹ️';
+  t.className=`t ${cls}`;
+  t.innerHTML=`<span class="tic">${ic}</span><div class="tb"><strong>${title}</strong><span>${msg}</span></div>`;
+  w.appendChild(t);
+  setTimeout(()=>{ t.style.cssText='opacity:0;transform:translateX(20px);transition:all .3s'; setTimeout(()=>t.remove(),320); },4500);
+}
+
+/* ── INIT ── */
+document.getElementById('r-dt').value=new Date().toISOString().slice(0,16);
+</script>
+</body>
+</html>
