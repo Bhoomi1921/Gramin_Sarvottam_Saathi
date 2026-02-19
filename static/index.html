@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Safe Return | Reuniting Families</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="landingPage">
+        <nav class="navbar">
+            <div class="logo"><i class="fas fa-heart"></i> Safe Return</div>
+            <div class="nav-right">
+                <select class="lang-dropdown"><option>English</option></select>
+                <button class="login-nav-btn" onclick="openLogin()">Login</button>
+            </div>
+        </nav>
+
+        <header class="hero">
+            <h1>Welcome to Safe Return</h1>
+            <p>Reuniting families, one step at a time</p>
+            <div class="hero-btns">
+                <button class="btn-orange" onclick="openLogin()">Login / Register</button>
+                <button class="btn-dark" onclick="handleMapNavigation()">Map Navigation</button>
+            </div>
+        </header>
+
+        <main class="container">
+            <h2 class="title">Comprehensive Lost & Found Solution</h2>
+            <div class="card-grid">
+                <div class="card" onclick="openLogin()">
+                    <div class="icon-circle icon-orange"><i class="fas fa-users"></i></div>
+                    <h3>Lost Person Reporting</h3>
+                    <p>Upload multiple photos for AI-powered matching.</p>
+                </div>
+                <div class="card" onclick="openLogin()">
+                    <div class="icon-circle icon-purple"><i class="fas fa-shield-alt"></i></div>
+                    <h3>Role-Based Access</h3>
+                    <p>Separate interfaces for public, volunteers, and admin.</p>
+                </div>
+                <div class="card" onclick="openLogin()">
+                    <div class="icon-circle icon-red"><i class="fas fa-bell"></i></div>
+                    <h3>Real-time Alerts</h3>
+                    <p>Instant notifications when potential matches are found.</p>
+                </div>
+                <div class="card" onclick="openLogin()">
+                    <div class="icon-circle icon-gold"><i class="fas fa-globe"></i></div>
+                    <h3>Multi-Language Support</h3>
+                    <p>Available in English, Hindi, Marathi, and more.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="loginModal" class="modal-overlay">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="logo-circle"><i class="fas fa-heart"></i></div>
+                <span class="logo-text">Safe Return</span>
+            </div>
+            <h2>Login</h2>
+            <p class="login-subtext">Welcome back to reunite families</p>
+            <form id="authForm">
+                <div class="input-field">
+                    <label>Email</label>
+                    <div class="field-box"><i class="far fa-envelope"></i><input type="email" id="emailInput" placeholder="Enter your email" required></div>
+                </div>
+                <div class="input-field">
+                    <label>Password</label>
+                    <div class="field-box"><i class="fas fa-lock"></i><input type="password" id="passInput" placeholder="Enter your password" required></div>
+                </div>
+                <div class="input-field">
+                    <label>Role</label>
+                    <div class="field-box"><i class="far fa-user"></i>
+                        <select id="roleInput">
+                            <option>Public</option>
+                            <option>Volunteer</option>
+                            <option>Admin</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="button" class="submit-btn" onclick="handleLogin()">Login</button>
+            </form>
+            <p class="reg-link">Don't have an account? <a href="#">Register here</a></p>
+            <button class="back-link" onclick="closeLogin()">← Back to Home</button>
+        </div>
+    </div>
+
+    <!-- ══════════════ ADMIN DASHBOARD ══════════════ -->
+    <div id="adminDashboard" style="display: none;">
+        <nav class="dash-nav">
+            <div class="logo-text">SahaYatri <span style="color:#64748b; font-size: 0.75rem; font-weight: normal;">| ADMIN</span></div>
+            <div class="dash-menu">
+                <span class="active-tab" onclick="showDashboard()">Dashboard</span>
+                <span onclick="showMap()">NGO Map</span>
+                <span>Search</span>
+                <span onclick="showNotifications()">Notifications</span>
+            </div>
+            <div class="user-profile">
+                <div class="notification-bell" onclick="showNotifications()" style="position: relative; cursor: pointer;">
+                    <i class="fas fa-bell"></i>
+                    <span class="notifbadge notif-badge">0</span>
+                </div>
+                <div class="profile-container" style="display: flex; align-items: center; gap: 10px;">
+                    <div class="profile-circle"><i class="fas fa-user-shield"></i></div>
+                    <div class="profile-info">
+                        <strong class="displayUserName">Admin User</strong>
+                        <span class="displayUserRole">Administrator</span>
+                    </div>
+                </div>
+                <i class="fas fa-sign-out-alt logout-icon" onclick="logout()" title="Logout" style="cursor: pointer;"></i>
+            </div>
+        </nav>
+
+        <div class="dash-container">
+            <h1 class="dash-welcome">Welcome, Admin User</h1>
+            <p class="dash-sub">Shelter Management & Inmate Registry</p>
+
+            <div class="action-grid">
+                <div class="action-card bg-orange" id="card-lost-person" onclick="showReportForm()">
+                    <div class="icon-circle bg-white"><i class="fas fa-user-plus color-orange"></i></div>
+                    <h3>Register New Inmate</h3>
+                    <p>Add a person to the shelter database.</p>
+                </div>
+
+                <div class="action-card bg-purple" onclick="handleMapNavigation()">
+                    <div class="icon-circle bg-white"><i class="fas fa-map-marked-alt color-purple"></i></div>
+                    <h3>Map Navigation</h3>
+                    <p>View nearby shelters and resources.</p>
+                </div>
+            </div>
+
+            <div class="dashboard-row">
+                <div class="main-column">
+                    <!-- Statistics Panel (unchanged) -->
+                    <div class="panel stats-panel">
+                        <h2>Statistics</h2>
+                        <div class="stats-row">
+                            <div class="stat-item">
+                                <div class="stat-icon bg-orange"><i class="fas fa-chart-bar"></i></div>
+                                <strong id="stat-total">0</strong><span>Total Reports</span>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-icon bg-green"><i class="fas fa-user-check"></i></div>
+                                <strong id="stat-found">0</strong><span>Found Persons</span>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-icon bg-purple"><i class="fas fa-heart"></i></div>
+                                <strong>234</strong><span>Active Volunteers</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ══ ENHANCED ALL MISSING REPORTS TABLE (replaces old "Recent Reports") ══ -->
+                    <div class="admin-reports-section">
+                        <div class="admin-reports-header">
+                            <div>
+                                <h2 id="admin-tbl-title">All Missing Reports</h2>
+                                <p id="admin-tbl-sub">All submitted reports across the platform</p>
+                            </div>
+                            <div class="admin-filter-bar">
+                                <input type="text" id="admin-srch" placeholder="🔍  Search by name…" oninput="renderAdminTable()"/>
+                                <select id="admin-filt" onchange="renderAdminTable()">
+                                    <option value="">All Statuses</option>
+                                    <option>Missing</option>
+                                    <option>Found</option>
+                                    <option>Processing</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="admin-tbl-wrap">
+                            <table class="admin-missing-table">
+                                <thead>
+                                    <tr>
+                                        <th>Person</th>
+                                        <th>Age · Gender</th>
+                                        <th>Last Seen Location</th>
+                                        <th>Date Reported</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-tbl-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- ══ END ENHANCED TABLE ══ -->
+
+                </div>
+
+                <div class="side-column">
+                    <div class="panel notif-panel">
+                        <h2>Notifications</h2>
+                        <div class="notif-item"><i class="fas fa-check-circle text-green"></i> Potential match for Rajesh Kumar</div>
+                        <div class="notif-item"><i class="fas fa-exclamation-circle text-red"></i> Potential match for Ramesh Kumar</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════ PUBLIC DASHBOARD ══════════════ -->
+    <div id="publicDashboard" style="display: none;">
+        <nav class="dash-nav">
+            <div class="logo-text">SahaYatri <span style="color:#64748b; font-size: 0.75rem; font-weight: normal;">| PUBLIC</span></div>
+            <div class="dash-menu">
+                <span class="active-tab" onclick="showDashboard()">Dashboard</span>
+                <span onclick="showMap()">Find NGOs</span>
+                <span>Search</span>
+                <span onclick="showNotifications()">Notifications</span>
+            </div>
+            <div class="user-profile">
+                <div class="notification-bell" onclick="showNotifications()" style="position: relative; cursor: pointer;">
+                    <i class="fas fa-bell"></i>
+                    <span class="notifbadge notif-badge">0</span>
+                </div>
+                <div class="profile-container" style="display: flex; align-items: center; gap: 10px;">
+                    <div class="profile-circle"><i class="fas fa-user"></i></div>
+                    <div class="profile-info">
+                        <strong class="displayUserName">Public User</strong>
+                        <span class="displayUserRole">Citizen User</span>
+                    </div>
+                </div>
+                <i class="fas fa-sign-out-alt logout-icon" onclick="logout()" title="Logout" style="cursor: pointer;"></i>
+            </div>
+        </nav>
+
+        <div class="dash-container">
+            <h1 class="dash-welcome">Welcome, Public User</h1>
+            <p class="dash-sub">Help us reunite families</p>
+            <div class="action-grid">
+                <div class="action-card bg-orange" id="card-lost-person-public" onclick="showReportForm()">
+                    <div class="icon-circle bg-white"><i class="fas fa-bullhorn color-orange"></i></div>
+                    <h3>Report Lost Person</h3>
+                    <p>Upload photos and details of a missing loved one.</p>
+                </div>
+                <div class="action-card bg-blue">
+                    <div class="icon-circle bg-white"><i class="fas fa-search color-blue"></i></div>
+                    <h3>Search Gallery</h3>
+                    <p>Browse through identified persons in shelters.</p>
+                </div>
+                <div class="action-card bg-purple" onclick="handleMapNavigation()">
+                    <div class="icon-circle bg-white"><i class="fas fa-map-marker-alt color-purple"></i></div>
+                    <h3>Map Navigation</h3>
+                    <p>Find help centers and NGOs near you.</p>
+                </div>
+            </div>
+            <div class="dashboard-row">
+                <div class="main-column">
+                    <div class="panel stats-panel">
+                        <h2>Statistics</h2>
+                        <div class="stats-row">
+                            <div class="stat-item"><div class="stat-icon bg-orange"><i class="fas fa-chart-bar"></i></div><strong>1247</strong><span>Total Reports</span></div>
+                            <div class="stat-item"><div class="stat-icon bg-green"><i class="fas fa-user-check"></i></div><strong>892</strong><span>Found Persons</span></div>
+                            <div class="stat-item"><div class="stat-icon bg-purple"><i class="fas fa-heart"></i></div><strong>234</strong><span>Active Volunteers</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="side-column">
+                    <div class="panel notif-panel">
+                        <h2>Notifications</h2>
+                        <div class="notif-item"><i class="fas fa-check-circle text-green"></i> Potential match for Rajesh Kumar</div>
+                        <div class="notif-item"><i class="fas fa-exclamation-circle text-red"></i> Potential match for Ramesh Kumar</div>
+                    </div>
+                    <div class="panel help-panel" id="helpPanel">
+                        <h2>Need Help?</h2>
+                        <div class="help-item chat-bg"><i class="far fa-comment-dots"></i><span>Chat Support</span></div>
+                        <div class="help-item center-bg"><i class="fas fa-map-marker-alt"></i><span>Find Help Center</span></div>
+                    </div>
+                </div>
+                <div class="floating-chat" id="chatBubble"><i class="fas fa-comment-alt"></i></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════ REGISTER INMATE PAGE ══════════════ -->
+    <div id="registerInmatePage" style="display: none;">
+        <nav class="dash-nav">
+            <div class="logo"><i class="fas fa-heart" style="color:#f97316"></i> Safe Return | ADMIN</div>
+            <div class="dash-menu">
+                <span onclick="showDashboard()">Dashboard</span>
+                <span class="active-tab">Register Inmate</span>
+                <span>Search</span>
+                <span onclick="showMap()">NGO Map</span>
+            </div>
+            <div class="user-profile">
+                <i class="far fa-bell notification-bell"></i>
+                <div class="profile-container">
+                    <div class="profile-circle"><i class="fas fa-user-shield"></i></div>
+                    <div class="profile-info">
+                        <strong class="displayUserName">Admin User</strong>
+                        <span class="displayUserRole">Administrator</span>
+                    </div>
+                </div>
+                <i class="fas fa-sign-out-alt logout-icon" onclick="logout()"></i>
+            </div>
+        </nav>
+        <div class="form-container">
+            <div class="form-header-banner">
+                <h1 id="admin-report-form-title">Register New Inmate</h1>
+                <p>Onboard a person into the shelter database</p>
+            </div>
+            <form class="report-form" id="adminInmateForm">
+                <div class="form-section bg-light-blue">
+                    <h3><i class="fas fa-file-invoice"></i> Administrative Records</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Inmate ID *</label>
+                            <input type="text" id="admin-inmateId" placeholder="e.g. SR-2024-001">
+                        </div>
+                        <div class="form-group">
+                            <label>Registration No. *</label>
+                            <input type="text" id="admin-regNo" placeholder="Enter registration number">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Unique ID (Aadhar/Govt ID)</label>
+                            <input type="text" id="admin-uniqueId" placeholder="12-digit ID number">
+                        </div>
+                        <div class="form-group">
+                            <label>Inmate Current Status *</label>
+                            <select id="admin-status">
+                                <option value="Active">Active (In Shelter)</option>
+                                <option value="Released">Released</option>
+                                <option value="Transferred">Transferred</option>
+                                <option value="Reunited">Reunited with Family</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-section">
+                    <h3><i class="fas fa-user-circle"></i> Personal Information</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Full Name *</label>
+                            <input type="text" id="admin-fullName" placeholder="Enter full name">
+                        </div>
+                        <div class="form-group">
+                            <label>Date of Birth *</label>
+                            <input type="date" id="admin-dob">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Gender *</label>
+                            <select id="admin-gender">
+                                <option value="">Select gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Languages Spoken</label>
+                            <input type="text" id="admin-languages" placeholder="Hindi, English">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Permanent Address (if known)</label>
+                        <textarea id="admin-address" placeholder="Enter complete address, city, state, and pincode"></textarea>
+                    </div>
+                </div>
+                <div class="form-group" id="admin-date-joining-group">
+                    <label>Date of Joining *</label>
+                    <input type="date" id="admin-joiningDate">
+                </div>
+                <div class="form-section bg-light-purple">
+                    <h3><i class="fas fa-camera"></i> Photo Upload</h3>
+                    <div class="upload-box" onclick="document.getElementById('adminPhotoInput').click()">
+                        <i class="fas fa-camera"></i>
+                        <p id="uploadTextAdmin">Click to upload photos</p>
+                        <span>Upload multiple clear photos (JPG, PNG)</span>
+                        <input type="file" id="adminPhotoInput" multiple accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+                    </div>
+                </div>
+                <button type="button" id="admin-submit-btn" class="submit-report-btn" onclick="submitAdminInmateReport()">Confirm Registration</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ══════════════ REPORT LOST PAGE ══════════════ -->
+    <div id="reportLostPage" style="display: none;">
+        <nav class="dash-nav">
+            <div class="logo"><i class="fas fa-heart" style="color:#f97316"></i> Safe Return</div>
+            <div class="dash-menu">
+                <span onclick="showDashboard()">Dashboard</span>
+                <span class="active-tab">Report Lost Person</span>
+                <span>Search</span>
+                <span onclick="showMap()">Map</span>
+            </div>
+            <div class="user-profile">
+                <i class="far fa-bell notification-bell"></i>
+                <div class="profile-container">
+                    <div class="profile-circle"><i class="fas fa-user"></i></div>
+                    <div class="profile-info">
+                        <strong class="displayUserName">Public User</strong>
+                        <span class="displayUserRole">Public</span>
+                    </div>
+                </div>
+                <i class="fas fa-sign-out-alt logout-icon" onclick="logout()"></i>
+            </div>
+        </nav>
+        <div class="form-container">
+            <div class="form-header-banner">
+                <h1 id="public-report-form-title">Report Lost Person</h1>
+                <p>Provide detailed information to help us find your loved one</p>
+            </div>
+            <form class="report-form" id="publicLostForm">
+                <div class="form-section">
+                    <h3><i class="fas fa-user-circle"></i> Personal Information</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Full Name *</label>
+                            <input type="text" id="public-fullName" placeholder="Enter full name">
+                        </div>
+                        <div class="form-group">
+                            <label>Age *</label>
+                            <input type="number" id="public-age" placeholder="Enter age">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Gender *</label>
+                            <select id="gender"><option>Select gender</option><option>Male</option><option>Female</option></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Languages Spoken</label>
+                            <input type="text" id="language_spoken" placeholder="Hindi, English, Marathi">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-section bg-light-blue">
+                    <h3><i class="fas fa-map-marker-alt"></i> Last Seen Information</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Last Seen Location *</label>
+                            <input type="text" id="public-location" placeholder="Location name">
+                        </div>
+                        <div class="form-group">
+                            <label>Last Seen Date & Time *</label>
+                            <input type="datetime-local" id="public-dateTime">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-section bg-light-green">
+                    <h3><i class="fas fa-tshirt"></i> Physical & Clothing Description</h3>
+                    <div class="form-group">
+                        <label>Clothing Description *</label>
+                        <textarea id="clothing_description" placeholder="Red kurta, blue jeans, white sneakers, etc."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>General Description</label>
+                        <textarea id="general_description" placeholder="Height, build, distinctive features, behavior, etc."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Medical Conditions (if any)</label>
+                        <input type="text" id="medical_condition" placeholder="Enter medical conditions">
+                    </div>
+                </div>
+                <div class="form-section bg-light-purple">
+                    <h3><i class="fas fa-camera"></i> Photo Upload</h3>
+                    <div class="upload-box" onclick="triggerFileInput('public')">
+                        <i class="fas fa-camera"></i>
+                        <p id="uploadTextPublic">Click to upload photos</p>
+                        <span>Upload multiple clear photos (JPG, PNG)</span>
+                        <input type="file" id="publicPhotoInput" multiple accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+                    </div>
+                </div>
+                <div class="form-section" id="public-family-contact-section">
+                    <h3><i class="fas fa-phone"></i> Family Contact Information</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Name of Family Member *</label>
+                            <input type="text" id="public-familyName" placeholder="Enter name">
+                        </div>
+                        <div class="form-group">
+                            <label>Phone Number *</label>
+                            <input type="text" id="public-familyPhone" placeholder="+91 00000 00000">
+                        </div>
+                    </div>
+                </div>
+                <button type="button" id="public-submit-btn" class="submit-report-btn" onclick="submitPublicLostReport()">Submit Lost Person Report</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ══════════════ FOUND REPORT PAGE ══════════════ -->
+    <div id="foundReportPage" style="display: none;">
+        <nav class="dash-nav">
+            <div class="logo"><i class="fas fa-heart" style="color:#f97316"></i> Safe Return</div>
+            <div class="dash-menu">
+                <span onclick="showDashboard()">Dashboard</span>
+                <span onclick="showReportForm()">Report Person</span>
+                <span class="active-tab" style="color:#22c55e !important; background:#f0fdf4 !important;">Report Found Person</span>
+            </div>
+            <div class="user-profile">
+                <i class="far fa-bell notification-bell"></i>
+                <div class="profile-container">
+                    <div class="profile-circle"><i class="fas fa-user"></i></div>
+                    <div class="profile-info">
+                        <strong class="displayUserName">Admin User</strong>
+                        <span class="displayUserRole">Admin</span>
+                    </div>
+                </div>
+                <i class="fas fa-sign-out-alt logout-icon" onclick="logout()"></i>
+            </div>
+        </nav>
+        <div class="form-container">
+            <div class="form-header-banner" style="background: #22c55e;">
+                <h1>Report Found Family</h1>
+                <p>Provide details about the family you found</p>
+            </div>
+            <form class="report-form">
+                <div class="form-section bg-light-blue">
+                    <h3><i class="fas fa-map-marker-alt"></i> Family Location & Time</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Family Location *</label>
+                            <input type="text" id="foundLocation" placeholder="Family Address">
+                        </div>
+                        <div class="form-group">
+                            <label>Found Date & Time *</label>
+                            <input type="datetime-local" id="foundDatetime">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-section bg-light-green">
+                    <div class="form-group">
+                        <label>Languages (if spoken)</label>
+                        <input type="text" id="found-languages" placeholder="Hindi, English...">
+                    </div>
+                </div>
+                <div class="form-section">
+                    <h3><i class="fas fa-phone"></i> Contact Information of Family</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Name of Family Member *</label>
+                            <input type="text" id="contact_name" placeholder="Enter Name of Member">
+                        </div>
+                        <div class="form-group">
+                            <label>Phone Number of Family Member *</label>
+                            <input type="text" id="contact_phone" placeholder="+91 9876543210">
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="submit-report-btn" style="background: #22c55e;" onclick="submitFoundReport()">Submit Found Family Report</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ══════════════ MAP PAGE ══════════════ -->
+    <div id="mapPage" style="display:none;">
+        <nav class="dash-nav">
+            <div class="logo"><i class="fas fa-heart" style="color:#f97316"></i> Safe Return</div>
+            <div class="dash-menu">
+                <span onclick="showDashboard()">Dashboard</span>
+                <span onclick="showReportForm()">Report Person</span>
+                <span>Search</span>
+                <span class="active-tab" onclick="showMap()">Map</span>
+            </div>
+            <div class="user-profile">
+                <i class="fas fa-sign-out-alt logout-icon" onclick="logout()"></i>
+            </div>
+        </nav>
+        <div class="map-layout">
+            <div class="map-view-panel">
+                <div class="map-search-bar">
+                    <input type="text" id="mapSearchInput" placeholder="Enter city or NGO name">
+                    <button onclick="searchNearby()" class="btn-orange">Search</button>
+                </div>
+                <div id="map"></div>
+            </div>
+            <aside class="map-sidebar">
+                <div class="panel">
+                    <h3>Emergency</h3>
+                    <p>Police: 100</p>
+                    <p>Ambulance: 108</p>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- ══════════════ NOTIFICATIONS PAGE ══════════════ -->
+    <div id="notificationsPage" style="display: none;">
+        <nav class="dash-nav">
+            <div class="logo"><i class="fas fa-heart" style="color:#f97316"></i> Safe Return</div>
+            <div class="dash-menu">
+                <span onclick="showDashboard()">Dashboard</span>
+                <span onclick="showReportForm()">Report Person</span>
+                <span>Search</span>
+                <span onclick="showMap()">Map</span>
+                <span class="active-tab" onclick="showNotifications()">Notifications <span class="notif-badge">3</span></span>
+            </div>
+            <div class="user-profile">
+                <i class="far fa-bell notification-bell"></i>
+                <div class="profile-container">
+                    <div class="profile-circle"><i class="fas fa-user"></i></div>
+                    <div class="profile-info">
+                        <strong class="displayUserName">Public User</strong>
+                        <span class="displayUserRole">Public</span>
+                    </div>
+                </div>
+                <i class="fas fa-sign-out-alt logout-icon" onclick="logout()"></i>
+            </div>
+        </nav>
+        <div class="notifications-container">
+            <div class="notifications-header">
+                <h1><i class="fas fa-bell"></i> Notifications</h1>
+                <button class="mark-all-read" onclick="markAllAsRead()">Mark all as read</button>
+            </div>
+            <div class="notification-filters">
+                <button class="filter-btn active" onclick="filterNotifications('all')">All</button>
+                <button class="filter-btn" onclick="filterNotifications('match')">Match Found</button>
+                <button class="filter-btn" onclick="filterNotifications('update')">Updates</button>
+                <button class="filter-btn" onclick="filterNotifications('system')">System</button>
+            </div>
+            <div class="notifications-list" id="notificationsList"></div>
+        </div>
+    </div>
+
+    <!-- Notification Toast Container -->
+    <div id="notificationToast" class="notification-toast"></div>
+
+    <!-- SMS Confirmation Modal -->
+    <div id="smsModal" class="modal-overlay" style="display: none;">
+        <div class="sms-modal">
+            <div class="sms-header">
+                <i class="fas fa-sms" style="font-size: 3rem; color: #22c55e;"></i>
+                <h2>SMS Notification Sent!</h2>
+            </div>
+            <div class="sms-body">
+                <p class="sms-message">A notification has been sent to your registered mobile number:</p>
+                <div class="phone-display">
+                    <i class="fas fa-mobile-alt"></i>
+                    <span id="smsPhoneNumber">+91 7694818589</span>
+                </div>
+                <div class="sms-preview">
+                    <strong>Message Preview:</strong>
+                    <p id="smsMessagePreview"></p>
+                </div>
+            </div>
+            <button class="sms-ok-btn" onclick="closeSMSModal()">Got it!</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="connect.js"></script>
+    <script src="connect1.js"></script>
+    <script src="connect2.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</body>
+</html>

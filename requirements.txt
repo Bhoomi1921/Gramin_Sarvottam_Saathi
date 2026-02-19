@@ -1,8 +1,8 @@
-flask
-flask-cors
-deepface
-tf-keras
-pandas
-openpyxl
-pillow
-gunicorn
+flask>=3.0
+flask-cors>=4.0
+gunicorn>=21.0
+deepface>=0.0.93
+tensorflow>=2.15          # required by DeepFace ArcFace/RetinaFace
+pandas>=2.0
+openpyxl>=3.1             # pandas Excel support
+Pillow>=10.0

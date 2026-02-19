@@ -1,238 +1,202 @@
-# from flask import Flask, request, jsonify
-# from flask_cors import CORS
-# from deepface import DeepFace
-# import pandas as pd
-# import os
-# from PIL import Image
-# import base64
-# import io
+"""
+api.py  –  Safe Return  |  Face Recognition API
+Production-ready Flask application (served via Gunicorn / WSGI).
 
-# app = Flask(__name__)
-# CORS(app)  # Allow your HTML page to call this API
+Directory layout expected next to this file:
+    data/          ← folder of inmate photos  (e.g. 001.jpg, 002.jpg …)
+    sheet.xlsx     ← Excel with columns  "Inmate Id"  and  "Name"
+    static/        ← built frontend assets  (index.html, script.js, style.css …)
+"""
 
-# EXCEL_PATH = "sheet.xlsx"
-# DB_PATH = "data"
-# CONFIDENCE_THRESHOLD = 0.6
-
-# def load_person_data():
-#     return pd.read_excel(EXCEL_PATH)
-
-# @app.route("/recognize", methods=["POST"])
-# def recognize():
-#     try:
-#         data = request.get_json()
-        
-#         # Decode base64 image sent from the browser
-#         img_data = data["image"].split(",")[1]  # strip "data:image/...;base64,"
-#         img_bytes = base64.b64decode(img_data)
-#         image = Image.open(io.BytesIO(img_bytes)).convert("RGB")
-        
-#         # Save temporarily
-#         temp_path = "temp_query.jpg"
-#         image.save(temp_path)
-        
-#         # Run DeepFace recognition
-#         results = DeepFace.find(
-#             img_path=temp_path,
-#             db_path=DB_PATH,
-#             model_name="ArcFace",
-#             detector_backend="retinaface",
-#             distance_metric="cosine",
-#             enforce_detection=True,
-#             silent=True
-#         )
-#         os.remove(temp_path)
-        
-#         if not results or results[0].empty:
-#             return jsonify({"match": False, "message": "No match found"})
-        
-#         best = results[0].iloc[0]
-#         distance = best["distance"]
-#         confidence = round((1 - distance) * 100, 1)
-        
-#         person_id = os.path.basename(best["identity"]).split(".")[0]
-        
-#         df = load_person_data()
-#         row = df[df["Inmate Id"].astype(str) == str(person_id)]
-        
-#         if row.empty:
-#             return jsonify({"match": False, "message": f"Person ID {person_id} not in database"})
-        
-#         person_name = row.iloc[0]["Name"]
-        
-#         return jsonify({
-#             "match": confidence / 100 >= CONFIDENCE_THRESHOLD,
-#             "confidence": confidence,
-#             "person_id": person_id,
-#             "person_name": person_name
-#         })
-
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 500
-
-# if __name__ == "__main__":
-#     app.run(port=5000, debug=True)
-
-from flask import Flask, request, jsonify, send_file
-from flask_cors import CORS
-from deepface import DeepFace
-import pandas as pd
 import os
-from PIL import Image
-import base64
 import io
+import base64
+import logging
 import traceback
+import tempfile
 
-app = Flask(__name__)
-CORS(app, origins="*")  # Allow ALL origins
+import pandas as pd
+from PIL import Image
+from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
 
-# ── CONFIG ── Edit these paths if needed
-EXCEL_PATH  = "sheet.xlsx"
-DB_PATH     = "data"
-CONFIDENCE_THRESHOLD = 0.6
-TEMP_IMAGE  = "temp_query.jpg"
+# ─────────────────────────────────────────────
+#  Logging  (writes to stdout → captured by Gunicorn)
+# ─────────────────────────────────────────────
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s – %(message)s",
+)
+logger = logging.getLogger("safe_return")
 
-# ─────────────────────────────────────────
-# Serve the HTML frontend at http://localhost:5000
-# ─────────────────────────────────────────
+
+# ─────────────────────────────────────────────
+#  Config  (override via environment variables)
+# ─────────────────────────────────────────────
+BASE_DIR             = os.path.dirname(os.path.abspath(__file__))
+EXCEL_PATH           = os.environ.get("EXCEL_PATH",  os.path.join(BASE_DIR, "sheet.xlsx"))
+DB_PATH              = os.environ.get("DB_PATH",     os.path.join(BASE_DIR, "data"))
+STATIC_DIR           = os.environ.get("STATIC_DIR",  os.path.join(BASE_DIR, "static"))
+CONFIDENCE_THRESHOLD = float(os.environ.get("CONFIDENCE_THRESHOLD", "0.6"))
+
+# Lazy-import DeepFace so the app starts quickly even when running health checks
+def _deepface():
+    from deepface import DeepFace  # noqa
+    return DeepFace
+
+
+# ─────────────────────────────────────────────
+#  Flask app
+# ─────────────────────────────────────────────
+app = Flask(__name__, static_folder=None)
+CORS(app, origins=os.environ.get("ALLOWED_ORIGINS", "*"))
+
+
+# ── Serve the frontend ──────────────────────
 @app.route("/")
 def index():
-    # Looks for safe_return.html in the same folder as api.py
-    html_path = os.path.join(os.path.dirname(__file__), "safe_return.html")
-    if not os.path.exists(html_path):
-        return "safe_return.html not found next to api.py", 404
-    return send_file(html_path)
+    return send_from_directory(STATIC_DIR, "index.html")
 
 
-# ─────────────────────────────────────────
-# Health-check — open http://localhost:5000/test to confirm API is alive
-# ─────────────────────────────────────────
+@app.route("/<path:filename>")
+def static_files(filename):
+    """Serve JS / CSS / assets from the static directory."""
+    return send_from_directory(STATIC_DIR, filename)
+
+
+# ── Health check ────────────────────────────
 @app.route("/test")
 def test():
-    excel_ok = os.path.exists(EXCEL_PATH)
-    db_ok    = os.path.exists(DB_PATH)
     return jsonify({
-        "status":       "ok",
-        "excel_found":  excel_ok,
-        "excel_path":   os.path.abspath(EXCEL_PATH),
-        "db_found":     db_ok,
-        "db_path":      os.path.abspath(DB_PATH),
+        "status":      "ok",
+        "excel_found": os.path.exists(EXCEL_PATH),
+        "excel_path":  EXCEL_PATH,
+        "db_found":    os.path.exists(DB_PATH),
+        "db_path":     DB_PATH,
     })
 
 
-# ─────────────────────────────────────────
-# Main recognition endpoint
-# ─────────────────────────────────────────
+# ── Face Recognition ────────────────────────
 @app.route("/recognize", methods=["POST", "OPTIONS"])
 def recognize():
-    # Handle CORS preflight
+    # CORS pre-flight
     if request.method == "OPTIONS":
         return jsonify({"ok": True}), 200
 
-    print("\n========== /recognize called ==========")
+    logger.info("POST /recognize – request received")
 
-    # ── 1. Parse incoming JSON ──
+    # 1. Parse JSON body
     data = request.get_json(silent=True)
     if not data:
-        print("ERROR: No JSON body received")
+        logger.warning("No JSON body in request")
         return jsonify({"error": "No JSON body received"}), 400
 
     image_b64 = data.get("image")
     if not image_b64:
-        print("ERROR: 'image' field missing from JSON")
+        logger.warning("'image' field missing from JSON")
         return jsonify({"error": "'image' field missing"}), 400
 
-    print(f"Image data received, length: {len(image_b64)} chars")
-
-    # ── 2. Decode base64 image ──
+    # 2. Decode base64 image → temp file
+    #    Use a proper temp file so concurrent workers don't collide
+    tmp_path = None
     try:
-        # Strip the data URL prefix if present (data:image/jpeg;base64,...)
-        if "," in image_b64:
+        if "," in image_b64:                       # strip data-URL prefix
             image_b64 = image_b64.split(",", 1)[1]
 
         img_bytes = base64.b64decode(image_b64)
         image     = Image.open(io.BytesIO(img_bytes)).convert("RGB")
-        image.save(TEMP_IMAGE)
-        print(f"Image decoded and saved as {TEMP_IMAGE} ({image.size})")
-    except Exception as e:
-        print(f"ERROR decoding image: {e}")
-        return jsonify({"error": f"Could not decode image: {str(e)}"}), 400
 
-    # ── 3. Run DeepFace recognition ──
+        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
+            tmp_path = tmp.name
+        image.save(tmp_path, format="JPEG", quality=95)
+        logger.info("Image decoded, size=%s, saved to %s", image.size, tmp_path)
+    except Exception as exc:
+        logger.error("Image decode error: %s", exc)
+        _cleanup(tmp_path)
+        return jsonify({"error": f"Could not decode image: {exc}"}), 400
+
+    # 3. Run DeepFace recognition
     try:
-        print(f"Running DeepFace.find on db_path='{DB_PATH}' ...")
-        results = DeepFace.find(
-            img_path        = TEMP_IMAGE,
-            db_path         = DB_PATH,
-            model_name      = "ArcFace",
-            detector_backend= "retinaface",
-            distance_metric = "cosine",
-            enforce_detection=True,
-            silent          = True
+        logger.info("Running DeepFace.find  db_path='%s'", DB_PATH)
+        DeepFace = _deepface()
+        results  = DeepFace.find(
+            img_path          = tmp_path,
+            db_path           = DB_PATH,
+            model_name        = "ArcFace",
+            detector_backend  = "retinaface",
+            distance_metric   = "cosine",
+            enforce_detection = True,
+            silent            = True,
         )
-        print(f"DeepFace returned {len(results)} result dataframes")
-    except Exception as e:
+        logger.info("DeepFace returned %d result dataframe(s)", len(results))
+    except Exception as exc:
         traceback.print_exc()
-        _cleanup()
-        # Common case: no face detected
-        if "Face could not be detected" in str(e) or "No face" in str(e):
-            return jsonify({"match": False, "confidence": 0,
-                            "person_id": None, "person_name": None,
-                            "message": "No face detected in image"})
-        return jsonify({"error": f"DeepFace error: {str(e)}"}), 500
+        _cleanup(tmp_path)
+        msg = str(exc)
+        if "Face could not be detected" in msg or "No face" in msg:
+            return jsonify({
+                "match": False, "confidence": 0,
+                "person_id": None, "person_name": None,
+                "message": "No face detected in image",
+            })
+        return jsonify({"error": f"DeepFace error: {msg}"}), 500
+    finally:
+        _cleanup(tmp_path)
 
-    _cleanup()
-
-    # ── 4. Parse results ──
+    # 4. Parse results
     if not results or results[0].empty:
-        print("No match found in database")
-        return jsonify({"match": False, "confidence": 0,
-                        "person_id": None, "person_name": None,
-                        "message": "No match found in database"})
+        logger.info("No match found in database")
+        return jsonify({
+            "match": False, "confidence": 0,
+            "person_id": None, "person_name": None,
+            "message": "No match found in database",
+        })
 
     best       = results[0].iloc[0]
     distance   = float(best["distance"])
     confidence = round((1 - distance) * 100, 1)
     matched    = (1 - distance) >= CONFIDENCE_THRESHOLD
+    person_id  = os.path.splitext(os.path.basename(best["identity"]))[0]
 
-    # Extract person_id from filename (e.g. "data/001.jpg" → "001")
-    person_id = os.path.splitext(os.path.basename(best["identity"]))[0]
-    print(f"Best match: person_id={person_id}, distance={distance:.4f}, confidence={confidence}%")
+    logger.info("Best match: person_id=%s  distance=%.4f  confidence=%.1f%%  matched=%s",
+                person_id, distance, confidence, matched)
 
-    # ── 5. Look up name in Excel ──
+    # 5. Look up name in Excel
     person_name = None
     try:
         df  = pd.read_excel(EXCEL_PATH)
         row = df[df["Inmate Id"].astype(str) == str(person_id)]
         if not row.empty:
             person_name = str(row.iloc[0]["Name"])
-            print(f"Name found: {person_name}")
+            logger.info("Name resolved: %s", person_name)
         else:
-            print(f"WARNING: person_id '{person_id}' not found in Excel")
-    except Exception as e:
-        print(f"WARNING: Could not read Excel: {e}")
+            logger.warning("person_id '%s' not found in Excel", person_id)
+    except Exception as exc:
+        logger.warning("Could not read Excel: %s", exc)
 
     return jsonify({
         "match":       matched,
         "confidence":  confidence,
         "person_id":   person_id,
         "person_name": person_name or f"ID: {person_id} (name not found)",
-        "distance":    distance
+        "distance":    distance,
     })
 
 
-def _cleanup():
-    if os.path.exists(TEMP_IMAGE):
-        os.remove(TEMP_IMAGE)
+def _cleanup(path):
+    if path and os.path.exists(path):
+        try:
+            os.remove(path)
+        except OSError:
+            pass
 
 
+# ─────────────────────────────────────────────
+#  Dev-mode entry point  (NOT used by Gunicorn)
+# ─────────────────────────────────────────────
 if __name__ == "__main__":
-    print("\n" + "="*50)
-    print("Safe Return — Face Recognition API")
-    print("="*50)
-    print(f"Excel path : {os.path.abspath(EXCEL_PATH)}  {'✓' if os.path.exists(EXCEL_PATH) else '✗ NOT FOUND'}")
-    print(f"DB path    : {os.path.abspath(DB_PATH)}     {'✓' if os.path.exists(DB_PATH) else '✗ NOT FOUND'}")
-    print("\nOpen in browser → http://localhost:5000")
-    print("Health check   → http://localhost:5000/test")
-    print("="*50 + "\n")
+    logger.info("Starting in DEV mode – use Gunicorn for production")
+    logger.info("Excel : %s  %s", EXCEL_PATH,  "✓" if os.path.exists(EXCEL_PATH) else "✗ NOT FOUND")
+    logger.info("DB    : %s  %s", DB_PATH,     "✓" if os.path.exists(DB_PATH)     else "✗ NOT FOUND")
+    logger.info("Static: %s  %s", STATIC_DIR,  "✓" if os.path.exists(STATIC_DIR)  else "✗ NOT FOUND")
     app.run(host="0.0.0.0", port=5000, debug=True)
